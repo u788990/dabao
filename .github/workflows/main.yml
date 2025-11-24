@@ -19,24 +19,14 @@ jobs:
       - name: 安装Nuitka
         run: python -m pip install --upgrade nuitka
       
-      - name: 检查并准备源文件
+      - name: 检查源代码文件
         shell: pwsh
         run: |
-          Write-Host "当前目录所有Python文件:"
           Get-ChildItem *.py
-          
-          # 查找源文件(支持中文名或英文名)
-          if (Test-Path "别快EXE打包工具 v4.2.py") {
-            Copy-Item "别快EXE打包工具 v4.2.py" "GamePackager.py"
-            Write-Host "✅ 已复制中文源文件为: GamePackager.py"
-          } elseif (Test-Path "GamePackager_v4.2.py") {
-            Copy-Item "GamePackager_v4.2.py" "GamePackager.py"
-            Write-Host "✅ 已复制英文源文件为: GamePackager.py"
-          } elseif (Test-Path "GamePackager_v4.2.py.py") {
-            Copy-Item "GamePackager_v4.2.py.py" "GamePackager.py"
-            Write-Host "✅ 已复制源文件为: GamePackager.py"
+          if (Test-Path "GamePackager.py") {
+            Write-Host "✅ 源代码文件找到!"
           } else {
-            Write-Host "❌ 未找到源代码文件!"
+            Write-Host "❌ 源代码文件 'GamePackager.py' 不存在!"
             exit 1
           }
       
@@ -46,22 +36,22 @@ jobs:
           echo "PYTHONIOENCODING=utf-8" >> $env:GITHUB_ENV
           echo "PYTHONUTF8=1" >> $env:GITHUB_ENV
       
-      - name: Nuitka 编译（终极版）
+      - name: Nuitka 编译
         shell: pwsh
         run: |
-          Write-Host "开始编译你的终极打包神器..."
+          Write-Host "开始编译..."
           python -m nuitka `
             --onefile `
             --windows-console-mode=disable `
             --enable-plugin=tk-inter `
             --output-dir=dist `
-            --output-filename="BieKuai_Packager_v4.2.exe" `
+            --output-filename="GamePackager_v4.2.exe" `
             --show-progress `
-            --windows-product-name="BieKuai EXE Packager" `
+            --windows-product-name="Game Packager" `
             --windows-company-name="BieKuai Studio" `
             --windows-file-version=4.2.0.0 `
             --windows-product-version=4.2.0.0 `
-            --windows-file-description="EXE Package Tool" `
+            --windows-file-description="Game Package Tool" `
             "GamePackager.py"
           
           if ($LASTEXITCODE -eq 0) {
@@ -71,16 +61,8 @@ jobs:
             exit 1
           }
       
-      - name: 重命名输出文件
-        shell: pwsh
-        run: |
-          if (Test-Path "dist/BieKuai_Packager_v4.2.exe") {
-            Rename-Item "dist/BieKuai_Packager_v4.2.exe" "别快打包神器-v4.2.exe"
-            Write-Host "✅ 已重命名输出文件"
-          }
-      
       - name: 上传EXE
         uses: actions/upload-artifact@v4
         with:
-          name: 别快打包神器-v4.2-Nuitka版
+          name: GamePackager-v4.2-Nuitka
           path: dist/*.exe
