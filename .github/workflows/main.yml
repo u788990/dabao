@@ -47,6 +47,7 @@ jobs:
             --output-dir=dist `
             --output-filename="GamePackager_v4.2.exe" `
             --show-progress `
+            --assume-yes-for-downloads `
             --windows-product-name="Game Packager" `
             --windows-company-name="BieKuai Studio" `
             --windows-file-version=4.2.0.0 `
