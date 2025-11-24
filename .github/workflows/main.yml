@@ -1,4 +1,4 @@
-name: 编译Nuitka终极独立版
+name: 编译Nuitka(低误报版)
 on:
   workflow_dispatch:
   push:
@@ -19,24 +19,7 @@ jobs:
       - name: 安装Nuitka
         run: python -m pip install --upgrade nuitka
       
-      - name: 检查源代码文件
-        shell: pwsh
-        run: |
-          Get-ChildItem *.py
-          if (Test-Path "GamePackager.py") {
-            Write-Host "✅ 源代码文件找到!"
-          } else {
-            Write-Host "❌ 源代码文件 'GamePackager.py' 不存在!"
-            exit 1
-          }
-      
-      - name: 设置UTF-8编码环境
-        shell: pwsh
-        run: |
-          echo "PYTHONIOENCODING=utf-8" >> $env:GITHUB_ENV
-          echo "PYTHONUTF8=1" >> $env:GITHUB_ENV
-      
-      - name: Nuitka 编译
+      - name: Nuitka 编译(低误报配置)
         shell: pwsh
         run: |
           Write-Host "开始编译..."
@@ -45,25 +28,47 @@ jobs:
             --windows-console-mode=disable `
             --enable-plugin=tk-inter `
             --output-dir=dist `
-            --output-filename="GamePackager_v4.2.exe" `
+            --output-filename="GamePackager.exe" `
             --show-progress `
             --assume-yes-for-downloads `
-            --windows-product-name="Game Packager" `
-            --windows-company-name="BieKuai Studio" `
+            --mingw64 `
+            --lto=no `
             --windows-file-version=4.2.0.0 `
             --windows-product-version=4.2.0.0 `
-            --windows-file-description="Game Package Tool" `
+            --windows-company-name="BieKuai Studio" `
+            --windows-product-name="Game Packager" `
+            --windows-file-description="Game Packaging Tool for Windows" `
             "GamePackager.py"
           
           if ($LASTEXITCODE -eq 0) {
-            Write-Host "✅ 编译成功完成!"
+            Write-Host "✅ 编译成功!"
           } else {
-            Write-Host "❌ 编译失败!"
             exit 1
           }
       
-      - name: 上传EXE
+      - name: 创建安全说明
+        shell: pwsh
+        run: |
+          @"
+          ⚠️ 杀毒软件可能误报解决方案：
+          
+          1. 添加到 Windows Defender 白名单：
+             设置 → Windows安全中心 → 病毒和威胁防护 → 排除项 → 添加文件
+          
+          2. 验证安全性：
+             上传到 virustotal.com 扫描查看详细报告
+          
+          3. 本程序开源，代码透明可审查
+          
+          "@ | Out-File -FilePath "dist\安全说明.txt" -Encoding UTF8
+      
+      - name: 打包发布
+        shell: pwsh
+        run: |
+          Compress-Archive -Path "dist\*" -DestinationPath "GamePackager-v4.2.zip"
+      
+      - name: 上传构建产物
         uses: actions/upload-artifact@v4
         with:
-          name: GamePackager-v4.2-Nuitka
-          path: dist/*.exe
+          name: GamePackager-v4.2
+          path: GamePackager-v4.2.zip
