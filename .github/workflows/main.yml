@@ -1,0 +1,45 @@
+name: 编译Nuitka终极独立版
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 安装Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: 安装Nuitka
+        run: python -m pip install --upgrade nuitka
+
+      - name: 检查源代码文件
+        run: |
+          ls -la *.py
+          if [ -f "一键打包游戏.py" ]; then
+            echo "✅ 源代码文件找到！"
+          else
+            echo "❌ 源代码文件 '一键打包游戏.py' 不存在！"
+            exit 1
+          fi
+
+      - name: Nuitka 编译（终极版）
+        run: |
+          echo "开始编译你的终极打包神器..."
+          python -m nuitka --onefile --windows-disable-console --enable-plugin=tk-inter --output-dir=dist --show-progress --windows-product-name="别快EXE打包神器 v4.2" "别快EXE打包工具 v4.2.py"
+          echo "编译完成！"
+
+      - name: 上传EXE
+        uses: actions/upload-artifact@v4
+        with:
+          name: 别快打包神器-v4.2-Nuitka版.exe
+          path: dist/*.exe
