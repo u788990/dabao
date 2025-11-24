@@ -19,16 +19,25 @@ jobs:
       - name: 安装Nuitka
         run: python -m pip install --upgrade nuitka
       
-      - name: 检查源代码文件
+      - name: 重命名源文件为英文名
         shell: pwsh
         run: |
-          Get-ChildItem *.py
           if (Test-Path "别快EXE打包工具 v4.2.py") {
-            Write-Host "✅ 源代码文件找到!"
+            Copy-Item "别快EXE打包工具 v4.2.py" "GamePackager_v4.2.py"
+            Write-Host "✅ 源文件已复制为英文名: GamePackager_v4.2.py"
           } else {
-            Write-Host "❌ 源代码文件 '别快EXE打包工具 v4.2.py' 不存在!"
+            Write-Host "❌ 源代码文件不存在!"
+            Get-ChildItem *.py
             exit 1
           }
+      
+      - name: 设置UTF-8编码环境
+        shell: pwsh
+        run: |
+          $env:PYTHONIOENCODING = "utf-8"
+          $env:PYTHONUTF8 = "1"
+          echo "PYTHONIOENCODING=utf-8" >> $env:GITHUB_ENV
+          echo "PYTHONUTF8=1" >> $env:GITHUB_ENV
       
       - name: Nuitka 编译（终极版）
         shell: pwsh
@@ -39,14 +48,29 @@ jobs:
             --windows-console-mode=disable `
             --enable-plugin=tk-inter `
             --output-dir=dist `
+            --output-filename="BieKuai_Packager_v4.2.exe" `
             --show-progress `
-            --windows-product-name="别快EXE打包神器" `
-            --windows-company-name="别快工作室" `
+            --windows-product-name="BieKuai EXE Packager" `
+            --windows-company-name="BieKuai Studio" `
             --windows-file-version=4.2.0.0 `
             --windows-product-version=4.2.0.0 `
-            --windows-file-description="EXE打包工具" `
-            "别快EXE打包工具 v4.2.py"
-          Write-Host "编译完成!"
+            --windows-file-description="EXE Package Tool" `
+            "GamePackager_v4.2.py"
+          
+          if ($LASTEXITCODE -eq 0) {
+            Write-Host "✅ 编译成功完成!"
+          } else {
+            Write-Host "❌ 编译失败!"
+            exit 1
+          }
+      
+      - name: 重命名输出文件为中文名
+        shell: pwsh
+        run: |
+          if (Test-Path "dist/BieKuai_Packager_v4.2.exe") {
+            Rename-Item "dist/BieKuai_Packager_v4.2.exe" "别快打包神器-v4.2.exe"
+            Write-Host "✅ 已重命名为中文文件名"
+          }
       
       - name: 上传EXE
         uses: actions/upload-artifact@v4
